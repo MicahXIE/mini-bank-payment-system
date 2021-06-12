@@ -14,6 +14,11 @@ public class AccountService {
         this.accountRepository = accountRepository;
     }
 
+    public Account getAccountInfo(String username) {
+        Optional<Account> optionalAccount = accountRepository.findById(username);
+        return optionalAccount.isEmpty() ? null : optionalAccount.get();
+    }
+
     public Account login(String username) {
         Optional<Account> optionalAccount = accountRepository.findById(username);
 

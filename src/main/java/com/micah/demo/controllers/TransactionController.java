@@ -1,20 +1,37 @@
 package com.micah.demo.controllers;
 
+import com.micah.demo.controllers.responses.PayResponse;
+import com.micah.demo.controllers.responses.TopupResponse;
+import com.micah.demo.services.AccountService;
+import com.micah.demo.services.TransactionService;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.Positive;
 
 @RestController
 @RequestMapping("/api/v1/transaction")
 public class TransactionController {
+    private final TransactionService transactionService;
 
-//    @PostMapping(path = "/topup", produces = "application/json")
-//    public ResponseEntity<TopupResponse> topup(@Valid @RequestParam double amount) {
-//        return ResponseEntity.ok(responseHelpers.from(accountService.login(username)).toAccountResponse());
-//    }
+    public TransactionController(TransactionService transactionService) {
+        this.transactionService = transactionService;
+    }
 
-//    @PostMapping(path = "/pay", produces = "application/json")
-//    public ResponseEntity<AccountResponse> topup(@NotBlank @RequestParam String username,
-//                                                 @RequestParam double amount) {
-//        return ResponseEntity.ok(responseHelpers.from(accountService.login(username)).toAccountResponse());
-//    }
+    @PostMapping(path = "/topup", produces = "application/json")
+    public ResponseEntity<TopupResponse> topup(@Positive @RequestParam double amount) {
+        String username = "Alice";
+        return ResponseEntity.ok(transactionService.topupAccount(username, amount));
+    }
+
+    @PostMapping(path = "/pay", produces = "application/json")
+    public ResponseEntity<PayResponse> topup(@NotBlank @RequestParam String recipient,
+                                             @Positive @RequestParam double amount) {
+        String payer = "Alice";
+        return ResponseEntity.ok(transactionService.transfer(payer, recipient, amount));
+    }
 }

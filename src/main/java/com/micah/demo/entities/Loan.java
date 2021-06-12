@@ -3,6 +3,7 @@ package com.micah.demo.entities;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.experimental.Accessors;
 
 import javax.persistence.*;
 
@@ -10,6 +11,7 @@ import javax.persistence.*;
 @Setter
 @Getter
 @Entity
+@Accessors(chain = true)
 @Table(name = "loan")
 public class Loan extends Auditable{
     @Id
