@@ -9,6 +9,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class LoginResponse {
-    AccountData account;
-    List<LoanData> loanInfo;
+    private String token;
+    private AccountData account;
+    private List<LoanData> loanInfo;
 }

@@ -1,8 +1,8 @@
 package com.micah.demo.controllers;
 
+import com.micah.demo.auth.UserContext;
 import com.micah.demo.controllers.responses.PayResponse;
 import com.micah.demo.controllers.responses.TopupResponse;
-import com.micah.demo.services.AccountService;
 import com.micah.demo.services.TransactionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -24,14 +24,14 @@ public class TransactionController {
 
     @PostMapping(path = "/topup", produces = "application/json")
     public ResponseEntity<TopupResponse> topup(@Positive @RequestParam double amount) {
-        String username = "Alice";
+        String username = UserContext.getCurrentUserName();
         return ResponseEntity.ok(transactionService.topupAccount(username, amount));
     }
 
     @PostMapping(path = "/pay", produces = "application/json")
-    public ResponseEntity<PayResponse> topup(@NotBlank @RequestParam String recipient,
-                                             @Positive @RequestParam double amount) {
-        String payer = "Alice";
+    public ResponseEntity<PayResponse> pay(@NotBlank @RequestParam String recipient,
+                                           @Positive @RequestParam double amount) {
+        String payer = UserContext.getCurrentUserName();
         return ResponseEntity.ok(transactionService.transfer(payer, recipient, amount));
     }
 }

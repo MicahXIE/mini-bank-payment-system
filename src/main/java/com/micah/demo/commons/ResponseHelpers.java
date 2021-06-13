@@ -66,16 +66,19 @@ public class ResponseHelpers {
     }
 
     public class LoginResponseHelper {
+        String token;
         Account account;
         List<Loan> loanList;
 
-        public LoginResponseHelper(Account account, List<Loan> loanList) {
+        public LoginResponseHelper(String token, Account account, List<Loan> loanList) {
+            this.token = token;
             this.account = account;
             this.loanList = loanList;
         }
 
         public LoginResponse toLoginResponse() {
             LoginResponse loginResponse = new LoginResponse();
+            loginResponse.setToken(token);
             loginResponse.setAccount(from(account).toAccountData());
             loginResponse.setLoanInfo(loanList.stream().map(loan -> from(loan).toLoanData()).collect(Collectors.toList()));
             return loginResponse;
@@ -133,7 +136,7 @@ public class ResponseHelpers {
 
     public TransactionDataHelper from(Transaction transaction) { return new TransactionDataHelper(transaction); }
 
-    public LoginResponseHelper from(Account account, List<Loan> loanList) { return new LoginResponseHelper(account, loanList); }
+    public LoginResponseHelper from(String token, Account account, List<Loan> loanList) { return new LoginResponseHelper(token, account, loanList); }
 
     public TopupResponseHelper from(Account account, List<Loan> loanList, List<Transaction> transactionList) { return new TopupResponseHelper(account, loanList, transactionList); }
 

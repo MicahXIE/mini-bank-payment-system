@@ -8,7 +8,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 public class TopupResponse {
-    AccountData account;
-    List<TransactionData> transactionInfo;
-    List<LoanData> loanInfo;
+    private AccountData account;
+    private List<TransactionData> transactionInfo;
+    private List<LoanData> loanInfo;
 }

@@ -1,6 +1,7 @@
 package com.micah.demo.entities;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
@@ -12,6 +13,7 @@ import javax.persistence.*;
 @Getter
 @Entity
 @Accessors(chain = true)
+@NoArgsConstructor
 @Table(name = "loan")
 public class Loan extends Auditable{
     @Id
@@ -26,4 +28,11 @@ public class Loan extends Auditable{
     private Account lender;
 
     private double amount;
+
+    public Loan(Loan loan) {
+        this.loanId = loan.getLoanId();
+        this.borrower = loan.getBorrower();
+        this.lender = loan.getLender();
+        this.amount = loan.getAmount();
+    }
 }

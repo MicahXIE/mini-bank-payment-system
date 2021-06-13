@@ -64,8 +64,11 @@ public class TransactionService {
                         accountRepository.save(lenderAccount);
                     } else {
                         loan.setAmount(loan.getAmount() - currentBalance);
-                        currentBalance = 0.0d;
+                        Account lenderAccount = accountService.getAccountInfo(loan.getLender().getUsername());
+                        lenderAccount.setBalance(lenderAccount.getBalance() + currentBalance);
+                        accountRepository.save(lenderAccount);
                         loan = loanRepository.save(loan);
+                        currentBalance = 0.0d;
                         remainingLoanList.add(loan);
                     }
                 } else {
@@ -103,30 +106,31 @@ public class TransactionService {
         Loan payerLoan = loanService.getBorrowerAndLenderLoanInfo(payerName, recipientName);
         // recipient owe money to payer
         Loan recipientLoan = loanService.getBorrowerAndLenderLoanInfo(recipientName, payerName);
+        boolean hasNewTransaction = false;
+        boolean hasNewLoan = false;
+        boolean bothAccountChanged = false;
+        double realTransferredAmt = 0.0d;
+        double newLoanAmt = 0.0d;
 
         if (payerLoan == null) {    // payer doesn't owe money to recipient
             if (recipientLoan == null) {    // recipient doesn't owe money to payer
                 if (payerBalance >= amount) {
                     payerAccount.setBalance(payerBalance - amount);
                     recipientAccount.setBalance(recipientBalance + amount);
-                    newTransaction = new Transaction().setTransactionId(IdGenerator.generateTransactionId())
-                            .setPayer(payerAccount)
-                            .setRecipient(recipientAccount)
-                            .setAmount(amount);
+                    bothAccountChanged = true;
+                    hasNewTransaction = true;
+                    realTransferredAmt = amount;
                 } else {
-                    payerAccount.setBalance(0.0);
+                    payerAccount.setBalance(0.0d);
                     recipientAccount.setBalance(recipientBalance + payerBalance);
-                    newTransaction = new Transaction().setTransactionId(IdGenerator.generateTransactionId())
-                            .setPayer(payerAccount)
-                            .setRecipient(recipientAccount)
-                            .setAmount(payerBalance);
-                    postLoan = new Loan().setLoanId(IdGenerator.generateLoanId())
-                            .setBorrower(payerAccount)
-                            .setLender(recipientAccount)
-                            .setAmount(amount - payerBalance);
+                    bothAccountChanged = true;
+                    hasNewTransaction = true;
+                    realTransferredAmt = payerBalance;
+                    hasNewLoan = true;
+                    newLoanAmt = amount - payerBalance;
                 }
             } else {    // recipient owe money to payer
-                preLoan = recipientLoan;
+                preLoan = new Loan(recipientLoan);
                 if (recipientLoan.getAmount() > amount) {
                     recipientLoan.setAmount(recipientLoan.getAmount() - amount);
                     postLoan = loanRepository.save(recipientLoan);
@@ -135,48 +139,64 @@ public class TransactionService {
                     if (payerBalance >= transferAmt) {
                         payerAccount.setBalance(payerBalance - transferAmt);
                         recipientAccount.setBalance(recipientBalance + transferAmt);
-                        newTransaction = new Transaction().setTransactionId(IdGenerator.generateTransactionId())
-                                .setPayer(payerAccount)
-                                .setRecipient(recipientAccount)
-                                .setAmount(transferAmt);
+                        bothAccountChanged = true;
+                        hasNewTransaction = true;
+                        realTransferredAmt = transferAmt;
                         loanRepository.delete(recipientLoan);
                     } else {
                         payerAccount.setBalance(0.0d);
                         recipientAccount.setBalance(recipientBalance + payerBalance);
-                        newTransaction = new Transaction().setTransactionId(IdGenerator.generateTransactionId())
-                                .setPayer(payerAccount)
-                                .setRecipient(recipientAccount)
-                                .setAmount(payerBalance);
-                        postLoan = new Loan().setLoanId(IdGenerator.generateLoanId())
-                                .setBorrower(payerAccount)
-                                .setLender(recipientAccount)
-                                .setAmount(amount - payerBalance);
+                        bothAccountChanged = true;
+                        hasNewTransaction = true;
+                        realTransferredAmt = payerBalance;
+                        hasNewLoan = true;
+                        newLoanAmt = amount - payerBalance;
                     }
                 }
             }
         } else {    // payer owe money to recipient
-            preLoan = payerLoan;
+            preLoan = new Loan(payerLoan);
             double totalAmt = payerLoan.getAmount() + amount;
             if (payerBalance > totalAmt) {
                 payerAccount.setBalance(payerBalance - totalAmt);
                 recipientAccount.setBalance(recipientBalance + totalAmt);
-                newTransaction = new Transaction().setTransactionId(IdGenerator.generateTransactionId())
-                        .setPayer(payerAccount)
-                        .setRecipient(recipientAccount)
-                        .setAmount(totalAmt);
+                bothAccountChanged = true;
+                hasNewTransaction = true;
+                realTransferredAmt = totalAmt;
                 loanRepository.delete(payerLoan);
             } else {
                 payerAccount.setBalance(0.0d);
                 recipientAccount.setBalance(payerBalance + payerBalance);
-                if (payerBalance > 0) {
-                    newTransaction = new Transaction().setTransactionId(IdGenerator.generateTransactionId())
-                            .setPayer(payerAccount)
-                            .setRecipient(recipientAccount)
-                            .setAmount(payerBalance);
+                bothAccountChanged = true;
+                if (payerBalance > 0.0d) {
+                    hasNewTransaction = true;
+                    realTransferredAmt = payerBalance;
                 }
                 payerLoan.setAmount(totalAmt - payerBalance);
                 postLoan = loanRepository.save(payerLoan);
             }
+        }
+
+        if (bothAccountChanged) {
+            accountRepository.save(payerAccount);
+            accountRepository.save(recipientAccount);
+        }
+
+        if (hasNewTransaction) {
+            newTransaction = new Transaction().setTransactionId(IdGenerator.generateTransactionId())
+                    .setPayer(payerAccount)
+                    .setRecipient(recipientAccount)
+                    .setAmount(realTransferredAmt);
+            transactionRepository.save(newTransaction);
+
+        }
+
+        if (hasNewLoan) {
+            postLoan = new Loan().setLoanId(IdGenerator.generateLoanId())
+                    .setBorrower(payerAccount)
+                    .setLender(recipientAccount)
+                    .setAmount(newLoanAmt);
+            loanRepository.save(postLoan);
         }
 
         return responseHelpers.from(payerAccount, preLoan, newTransaction, postLoan).toPayResponse();

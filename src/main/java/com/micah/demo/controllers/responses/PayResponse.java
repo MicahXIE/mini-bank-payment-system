@@ -6,8 +6,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class PayResponse {
-    AccountData account;
-    LoanData preLoan;
-    TransactionData transactionInfo;
-    LoanData postLoan;
+    private AccountData account;
+    private LoanData preLoan;
+    private TransactionData transactionInfo;
+    private LoanData postLoan;
 }

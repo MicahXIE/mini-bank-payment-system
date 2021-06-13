@@ -1,8 +1,10 @@
 package com.micah.demo.controllers;
 
+import com.micah.demo.auth.jwt.JwtTokenProvider;
 import com.micah.demo.commons.ResponseHelpers;
 import com.micah.demo.controllers.responses.AccountData;
 import com.micah.demo.controllers.responses.LoginResponse;
+import com.micah.demo.entities.Account;
 import com.micah.demo.services.AccountService;
 import com.micah.demo.services.LoanService;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +27,9 @@ public class AccountController {
 
     @PostMapping(path = "/login", produces = "application/json")
     public ResponseEntity<LoginResponse> login(@NotBlank @RequestParam String username) {
-        return ResponseEntity.ok(responseHelpers.from(accountService.login(username), loanService.getUserLoanInfo(username)).toLoginResponse());
+        Account account = accountService.login(username);
+        String token = JwtTokenProvider.generateToken(account.getUsername());
+        return ResponseEntity.ok(responseHelpers.from(token, account, loanService.getUserLoanInfo(username)).toLoginResponse());
     }
 
 }

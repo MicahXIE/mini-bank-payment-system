@@ -26,6 +26,7 @@ public class AccountService {
             return optionalAccount.get();
         } else {
             Account account = new Account().setUsername(username).setBalance(0.0);
+            account = accountRepository.save(account);
             return account;
         }
     }
